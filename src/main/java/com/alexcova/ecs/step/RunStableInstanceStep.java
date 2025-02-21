@@ -32,8 +32,9 @@ public class RunStableInstanceStep extends Step {
 
             var definitions = c.containerDefinitions();
 
-            definitions.getFirst().toBuilder()
-                    .image(context.getCurrentImage() + ":stable");
+            var stableDefinition = definitions.getFirst().toBuilder()
+                    .image(context.getCurrentImage() + ":stable")
+                    .build();
 
             try {
                 context.getEcsClient()
@@ -46,7 +47,7 @@ public class RunStableInstanceStep extends Step {
                                 .runtimePlatform(c.runtimePlatform())
                                 .taskRoleArn(c.taskRoleArn())
                                 .ephemeralStorage(c.ephemeralStorage())
-                                .containerDefinitions(definitions)
+                                .containerDefinitions(List.of(stableDefinition))
                         );
 
                 backupFamily = context.getServiceName() + "-stable";
