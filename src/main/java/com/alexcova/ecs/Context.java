@@ -68,7 +68,17 @@ public class Context {
         var config = new File("deployerConfig.json");
 
         if (!config.exists()) {
-            throw new IllegalStateException("eurekaConfig.json not found");
+            configuration = new Configuration();
+
+            try {
+                ObjectMapper mapper = new ObjectMapper()
+                        .findAndRegisterModules();
+                mapper.writeValue(config, configuration);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            throw new IllegalStateException("deployerConfig.json has been created, please fill it out and try again.");
         }
 
         try {
