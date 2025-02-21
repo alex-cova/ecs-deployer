@@ -87,7 +87,8 @@ public class ConfigureImageStep extends Step {
 
             System.out.println("🔥 Image for " + context.getServiceName() + " tagged as stable, digest: " + currentDigest);
         } catch (ImageAlreadyExistsException ex) {
-            System.out.println("🤡 Image already exists");
+            System.out.println("🤡 Image already exists: " + ex.getMessage());
+            context.setStableDigest(currentDigest);
         }
     }
 }

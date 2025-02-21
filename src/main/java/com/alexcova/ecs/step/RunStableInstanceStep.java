@@ -25,7 +25,36 @@ public class RunStableInstanceStep extends Step {
             backupFamily = definitionResponse.taskDefinition().family();
             backupRevision = definitionResponse.taskDefinition().revision();
         } catch (Exception ex) {
-            throw new IllegalStateException("🤡 No stable image found: " + context.getServiceName() + "-stable");
+            System.err.println("🤡 No stable image found: " + context.getServiceName() + "-stable, creating a new one");
+
+            var c = context.getCurrentTaskDefinition()
+                    .taskDefinition();
+
+            var definitions = c.containerDefinitions();
+
+            definitions.getFirst().toBuilder()
+                    .image(context.getCurrentImage() + ":stable");
+
+            try {
+                context.getEcsClient()
+                        .registerTaskDefinition(b -> b.family(context.getServiceName() + "-stable")
+                                .networkMode(c.networkMode())
+                                .cpu(c.cpu())
+                                .memory(c.memory())
+                                .ipcMode(c.ipcMode())
+                                .executionRoleArn(c.executionRoleArn())
+                                .runtimePlatform(c.runtimePlatform())
+                                .taskRoleArn(c.taskRoleArn())
+                                .ephemeralStorage(c.ephemeralStorage())
+                                .containerDefinitions(definitions)
+                        );
+
+                backupFamily = context.getServiceName() + "-stable";
+                backupRevision = 1;
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
 
         if (backupFamily.endsWith("-stable")) {

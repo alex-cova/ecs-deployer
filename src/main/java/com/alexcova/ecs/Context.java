@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,6 +53,7 @@ public class Context {
     private final Scanner scanner = new Scanner(System.in);
 
     private TaskDefinition taskDefinition = null;
+    private DescribeTaskDefinitionResponse currentTaskDefinition = null;
     private NetworkConfiguration networkConfiguration = null;
 
     private EcsClient ecsClient = null;
@@ -438,5 +440,13 @@ public class Context {
 
     public List<Instance> getEurekaInstances() {
         return eurekaClient.getInstances(serviceName, clusterName);
+    }
+
+    public void setCurrentTaskDefinition(DescribeTaskDefinitionResponse currentTask) {
+        this.currentTaskDefinition = currentTask;
+    }
+
+    public DescribeTaskDefinitionResponse getCurrentTaskDefinition() {
+        return Objects.requireNonNull(currentTaskDefinition);
     }
 }

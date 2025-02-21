@@ -90,6 +90,8 @@ public class CheckECSStep extends Step {
                         .build()
         );
 
+        context.setCurrentTaskDefinition(currentTask);
+
         var describeTaskResponse = context.getEcsClient().describeTasks(
                 DescribeTasksRequest.builder()
                         .cluster(context.getClusterName())

@@ -45,14 +45,17 @@ public abstract class Step {
                     .findFirst()
                     .orElse(null);
 
+
             if (task != null) {
+                var taskId = task.taskArn().substring(task.taskArn().lastIndexOf("/") + 1);
+
                 if (task.healthStatus() == HealthStatus.HEALTHY) {
-                    System.out.println("new task " + task.taskArn() + " is healthy at " + LocalTime.now());
+                    System.out.println("new task " + taskId + " is healthy at " + LocalTime.now());
                     serviceUpdated = true;
                 } else if (task.healthStatus() == HealthStatus.UNHEALTHY) {
-                    throw new IllegalStateException("Task " + task.taskArn() + " is unhealthy, stopping deployment");
+                    throw new IllegalStateException("Task " + taskId + " is unhealthy, stopping deployment");
                 } else {
-                    System.out.println("Waiting (20 sec) for task " + task.taskArn() + ", current status: " + task.lastStatus());
+                    System.out.println("Waiting (20 sec) for task " + taskId + ", current status: " + task.lastStatus());
                     waitTime(20_000);
                 }
             } else {

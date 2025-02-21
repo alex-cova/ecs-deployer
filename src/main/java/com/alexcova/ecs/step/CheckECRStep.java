@@ -4,6 +4,9 @@ import com.alexcova.ecs.Context;
 import com.alexcova.ecs.Step;
 import org.jetbrains.annotations.NotNull;
 import software.amazon.awssdk.services.ecr.model.ImageIdentifier;
+import software.amazon.awssdk.services.ecr.model.ListImagesFilter;
+import software.amazon.awssdk.services.ecr.model.ListImagesRequest;
+import software.amazon.awssdk.services.ecr.model.TagStatus;
 
 import java.util.Objects;
 
@@ -19,10 +22,19 @@ public class CheckECRStep extends Step {
 
         var ecrClient = context.getEcrClient();
         var currentFamily = context.getCurrentFamily();
-
-        var imagesResponse = ecrClient.listImages(r -> r.repositoryName(currentFamily));
+        var imagesResponse = ecrClient.listImages(ListImagesRequest.builder()
+                .repositoryName(currentFamily)
+                .filter(ListImagesFilter.builder()
+                        .tagStatus(TagStatus.TAGGED)
+                        .build())
+                .maxResults(250)
+                .build());
 
         for (ImageIdentifier imageId : imagesResponse.imageIds()) {
+            if (imageId.imageTag() == null) {
+                continue;
+            }
+
             if ("latest".equals(imageId.imageTag())) {
                 context.setLatestImageDigest(imageId.imageDigest());
                 continue;
@@ -31,7 +43,10 @@ public class CheckECRStep extends Step {
             if ("stable".equals(imageId.imageTag())) {
                 context.setStableDigest(imageId.imageDigest());
             }
+
+            System.out.println("🔍 Found image: " + imageId.imageDigest() + " with tag: " + imageId.imageTag());
         }
+
 
         if (context.getStableDigest().isEmpty()) {
             System.err.println("⚠️ WARNING no stable image found!");
