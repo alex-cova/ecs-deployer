@@ -15,7 +15,8 @@ public class TimestampedResponse {
         return status;
     }
 
-    public LocalDateTime getTimestamp() {
-        return timestamp;
+    @Override
+    public String toString() {
+        return "Status: %s at %s".formatted(status, timestamp);
     }
 }
