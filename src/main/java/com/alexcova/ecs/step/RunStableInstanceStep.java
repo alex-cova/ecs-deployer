@@ -53,6 +53,7 @@ public class RunStableInstanceStep extends Step {
                 backupFamily = context.getServiceName() + "-stable";
                 backupRevision = 1;
 
+                context.setStableDigest(context.getCurrentImage());
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
