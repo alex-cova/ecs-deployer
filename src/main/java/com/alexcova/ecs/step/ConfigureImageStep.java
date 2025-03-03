@@ -12,11 +12,12 @@ public class ConfigureImageStep extends Step {
     @Override
     public void execute(@NotNull Context context) {
         if (context.getStableDigest().isEmpty()) {
-            System.err.println("No stable image found, creating one...");
+            System.err.println("🤡 No stable image found, creating one...");
             createStableImage(context);
-        } else if (!context.getLatestImageDigest().equals(context.getContainers().getFirst())) {
-
-            System.out.println("Update the stable image to the latest image? (y/n/cancel) " + context.getContainers().getFirst() + " ");
+        } else if (!context.getStableDigest().equals(context.getContainers().getFirst())) {
+            System.out.println("> Containers first: " + context.getContainers().getFirst());
+            System.out.println("> Latest image digest: " + context.getStableDigest());
+            System.out.println("😏 Update the stable image to the latest image? (y/n/cancel) " + context.getContainers().getFirst() + " ");
 
             String updateStableImage = context.getScanner().nextLine();
 
@@ -34,7 +35,7 @@ public class ConfigureImageStep extends Step {
             System.out.println("Service " + context.getServiceName() + " already using the latest image: " + context.getLatestImageDigest());
             System.out.println("-------------------------------------------------------------------------------------------------------------------------------");
 
-            System.out.println("Force new deployment? (y/n)");
+            System.out.println("⚠️ Force new deployment? (y/n)");
 
             String forceNewDeployment = context.getScanner().nextLine();
 

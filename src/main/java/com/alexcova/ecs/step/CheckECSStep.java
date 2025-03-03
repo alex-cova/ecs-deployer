@@ -75,7 +75,7 @@ public class CheckECSStep extends Step {
                 System.out.print("\t" + instance.getInstanceId() + " ");
             }
 
-            System.out.println("Is it correct? (y/n)");
+            System.out.println("😰 Is it correct? (y/n)");
 
             String correct = context.getScanner().nextLine();
 

@@ -64,8 +64,9 @@ public class RunStableInstanceStep extends Step {
                 throw new IllegalStateException("No stable image found");
             }
 
-            if (!context.getStableDigest().equals(context.getLatestImageDigest())) {
-                System.out.println("Update the stable image to the latest image? (y/n) " + context.getLatestImageDigest());
+            if (!context.getStableDigest().equals(context.getLatestImageDigest()) &&
+                    context.getLatestImageDigest().equals(context.getContainers().getFirst())) {
+                System.out.println("⚠️ Update the stable image to the latest image? (y/n) " + context.getLatestImageDigest());
 
                 String updateStableImage = context.getScanner().nextLine();
 

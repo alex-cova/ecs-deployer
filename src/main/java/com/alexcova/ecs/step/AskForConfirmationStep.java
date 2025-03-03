@@ -13,7 +13,7 @@ public class AskForConfirmationStep extends Step {
         }
 
         System.out.println("🕒 Application ready time: " + context.getWaitTime() + " seconds");
-        System.err.println("Ready to deploy " + context.getServiceName() + " to " + context.getClusterName() + "? (y/n)");
+        System.err.println("🔥 Ready to deploy " + context.getServiceName() + " to " + context.getClusterName() + "? (y/n) 🔥");
 
         String ready = context.getScanner().nextLine();
 

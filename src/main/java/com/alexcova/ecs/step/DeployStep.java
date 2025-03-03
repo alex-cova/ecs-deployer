@@ -26,7 +26,7 @@ public class DeployStep extends Step {
         final var ecsClient = context.getEcsClient();
 
         if (context.isNeedsDefinitionUpdate()) {
-            System.out.println("Update task definition to revision " + context.getNewRevision() + "? (y/n)");
+            System.out.println("🤠 Update task definition to revision " + context.getNewRevision() + "? (y/n)");
 
             String updateDefinition = scanner.nextLine();
 
