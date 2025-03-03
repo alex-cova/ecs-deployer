@@ -5,9 +5,12 @@ import com.alexcova.ecs.Context;
 import com.alexcova.ecs.Step;
 import com.alexcova.ecs.TaskDefinition;
 import org.jetbrains.annotations.NotNull;
+import software.amazon.awssdk.services.ecr.model.DescribeImagesRequest;
+import software.amazon.awssdk.services.ecr.model.ImageIdentifier;
 import software.amazon.awssdk.services.ecs.model.*;
 import com.alexcova.eureka.Instance;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class CheckECSStep extends Step {
@@ -129,7 +132,18 @@ public class CheckECSStep extends Step {
 
         context.setCurrentImage(currentContainer.image());
 
-        System.out.println("Current container image: " + context.getCurrentImage());
+        var description = context.getEcsClient()
+                .describeTasks(DescribeTasksRequest.builder()
+                        .cluster(context.getClusterName())
+                        .tasks(List.of(currentTasksArns.getFirst().value()))
+                        .build());
+
+        System.out.println("👉 Current container image: " + context.getCurrentImage());
+
+        System.out.println("----------------------------------------------------------------------------");
+        System.out.println("👉 Current container image digest: " + description.tasks().getFirst().containers().getFirst().imageDigest());
+        context.setCurrentImageDiggest(description.tasks().getFirst().containers().getFirst().imageDigest());
+        System.out.println("----------------------------------------------------------------------------");
 
         var currentImage = context.getCurrentImage();
 
@@ -137,12 +151,12 @@ public class CheckECSStep extends Step {
             context.setCurrentTag(currentImage.substring(currentImage.indexOf(":") + 1));
         }
 
-        System.out.println("Task definition image: " + currentContainer.image() + ":" + context.getCurrentTag());
+        System.out.println("👉 Current task definition image: " + currentContainer.image() + ":" + context.getCurrentTag());
 
         if (context.getNewRevision() == taskDefinition.revision()) {
-            System.out.println("Task definition is already the latest revision (" + taskDefinition + ")");
+            System.out.println("👉 Task definition is already the latest revision (" + taskDefinition + ")");
         } else {
-            System.out.println("Task definition is not the latest revision (" + taskDefinition + ")");
+            System.out.println("👉 Task definition is not the latest revision (" + taskDefinition + ")");
             context.setNeedsDefinitionUpdate(true);
         }
 

@@ -38,6 +38,7 @@ public class Context {
 
     private String currentFamily = "";
     private String currentImage = "";
+    private String currentImageDiggest = "";
 
     private int newRevision = 0;
 
@@ -448,5 +449,9 @@ public class Context {
 
     public DescribeTaskDefinitionResponse getCurrentTaskDefinition() {
         return Objects.requireNonNull(currentTaskDefinition);
+    }
+
+    public void setCurrentImageDiggest(String currentImageDiggest) {
+        this.currentImageDiggest = currentImageDiggest;
     }
 }
