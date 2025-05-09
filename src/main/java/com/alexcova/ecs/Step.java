@@ -87,7 +87,7 @@ public abstract class Step {
                 instances.forEach(instance -> System.out.println("\t- Instance: " + instance.getInstanceId()
                         + " " + instance.getIpAddr() + ":" + instance.getPort() + " " + instance.getStatus()
                         + " " + LocalDateTime
-                        .ofEpochSecond(instance.getLeaseInfo().getRegistrationTimestamp(), 0, java.time.ZoneOffset.UTC)));
+                        .ofEpochSecond(instance.getLeaseInfo().getRegistrationTimestamp() / 1000, 0, java.time.ZoneOffset.UTC)));
 
                 if (context.getScanner().nextLine().equals("n")) {
                     break;

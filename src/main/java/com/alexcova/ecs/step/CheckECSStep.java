@@ -5,8 +5,6 @@ import com.alexcova.ecs.Context;
 import com.alexcova.ecs.Step;
 import com.alexcova.ecs.TaskDefinition;
 import org.jetbrains.annotations.NotNull;
-import software.amazon.awssdk.services.ecr.model.DescribeImagesRequest;
-import software.amazon.awssdk.services.ecr.model.ImageIdentifier;
 import software.amazon.awssdk.services.ecs.model.*;
 import com.alexcova.eureka.Instance;
 
