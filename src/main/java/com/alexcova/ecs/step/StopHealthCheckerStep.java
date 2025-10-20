@@ -26,5 +26,6 @@ public class StopHealthCheckerStep extends Step {
 
         System.out.println("-------------------------------------------------------------------------------------------------------------------------------");
 
+        System.exit(0);
     }
 }
