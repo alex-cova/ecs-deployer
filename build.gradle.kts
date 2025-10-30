@@ -7,7 +7,7 @@ plugins {
 group = "org.example"
 version = "1.0-SNAPSHOT"
 
-extra["awsVersion"] = "2.30.2"
+extra["awsVersion"] = "2.37.1"
 
 repositories {
     mavenCentral()

@@ -22,8 +22,16 @@ public class EcsDeployEngine {
     public void execute() {
         Step current = head;
         while (current != null) {
-            current.execute(context);
-            current = current.getNext();
+            try {
+                current.execute(context);
+                current = current.getNext();
+            } catch (AbortOperationException e) {
+                System.err.println(e.getMessage());
+                System.exit(1);
+                break;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

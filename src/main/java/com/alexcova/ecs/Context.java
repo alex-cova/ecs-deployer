@@ -3,6 +3,7 @@ package com.alexcova.ecs;
 import com.alexcova.eureka.EurekaClient;
 import com.alexcova.eureka.Instance;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jetbrains.annotations.Nullable;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ecr.EcrClient;
@@ -24,7 +25,7 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Context {
+public class Context implements CmdUtil {
 
     static HttpClient httpClient = HttpClient.newHttpClient();
 
@@ -47,6 +48,7 @@ public class Context {
 
     private final List<ARN> currentTasksArns = new ArrayList<>();
     private final List<ARN> backupTasksArns = new ArrayList<>();
+    private final List<ARN> newTasksArns = new ArrayList<>();
     private final List<String> containers = new ArrayList<>();
     private final List<Instance> currentEurekaInstances = new ArrayList<>();
     private final List<String> oldTasks = new ArrayList<>();
@@ -66,6 +68,7 @@ public class Context {
     private boolean usingECSID;
     private HealthChecker healthChecker;
     private final Configuration configuration;
+    private boolean production;
 
     public Context() {
         var config = new File("deployerConfig.json");
@@ -94,6 +97,10 @@ public class Context {
         }
     }
 
+    public void addNewTaskArn(ARN arn) {
+        newTasksArns.add(arn);
+    }
+
     public Configuration getConfiguration() {
         return configuration;
     }
@@ -103,7 +110,7 @@ public class Context {
             throw new IllegalStateException("Health checker already started");
         }
 
-        healthChecker = new HealthChecker(serviceName, clusterName, configuration);
+        healthChecker = new HealthChecker(this);
         healthChecker.start();
     }
 
@@ -117,26 +124,27 @@ public class Context {
         return healthChecker;
     }
 
+    public boolean isProduction() {
+        return production;
+    }
+
     public void doLogin() {
         if (ecrClient != null) {
             return;
         }
 
-        System.err.println("Go production? (y/n): ");
-
-        String production = scanner.nextLine();
-
         String fileName = ".aws/credentials";
 
-        if ("y".equals(production)) {
+        if (confirm("⚠️ GO PRODUCTION MODE?", this)) {
             fileName = ".aws/prod-credentials";
+            production = true;
         }
 
         File credentialsFile = new File(System.getProperty("user.home"), fileName);
 
         if (!credentialsFile.exists()) {
-            System.out.println("path: " + credentialsFile.getAbsolutePath());
-            throw new IllegalStateException("Credentials file not found. Please create a credentials file in the .aws directory in your home directory.");
+            System.out.println("Missing file: " + credentialsFile.getAbsolutePath());
+            throw new AbortOperationException("Credentials file not found. Please create a credentials file in the .aws directory in your home directory.");
         }
 
         try {
@@ -227,7 +235,7 @@ public class Context {
     }
 
     public void fetchWaitTime() {
-        var prometheus = clusterName.equals("development") ? configuration.getPrometheusDevelopment() : configuration.getPrometheusProduction();
+        var prometheus = production ? configuration.getPrometheusProduction() : configuration.getPrometheusDevelopment();
 
         var url = "https://%s/%s/v1/actuator/prometheus"
                 .formatted(prometheus, serviceName);
@@ -358,6 +366,10 @@ public class Context {
         return ecsClient;
     }
 
+    public List<ARN> getNewTasksArns() {
+        return newTasksArns;
+    }
+
     public String getServiceName() {
         return serviceName;
     }
@@ -453,5 +465,21 @@ public class Context {
 
     public void setCurrentImageDiggest(String currentImageDiggest) {
         this.currentImageDiggest = currentImageDiggest;
+    }
+
+    public @Nullable ARN getArn(String instanceId) {
+        for (ARN backupTasksArn : backupTasksArns) {
+            if (backupTasksArn.lastToken().equals(instanceId)) return backupTasksArn;
+        }
+
+        for (ARN currentTasksArn : currentTasksArns) {
+            if (currentTasksArn.lastToken().equals(instanceId)) return currentTasksArn;
+        }
+
+        for (ARN newTasksArn : newTasksArns) {
+            if (newTasksArn.lastToken().equals(instanceId)) return newTasksArn;
+        }
+
+        return null;
     }
 }

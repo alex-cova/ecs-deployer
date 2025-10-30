@@ -1,5 +1,6 @@
 package com.alexcova.ecs.step;
 
+import com.alexcova.ecs.AbortOperationException;
 import com.alexcova.ecs.Context;
 import com.alexcova.ecs.Step;
 import org.jetbrains.annotations.NotNull;
@@ -15,18 +16,13 @@ public class ConfigureImageStep extends Step {
             System.err.println("🤡 No stable image found, creating one...");
             createStableImage(context);
         } else if (!context.getStableDigest().equals(context.getContainers().getFirst())) {
-            System.out.println("> Containers first: " + context.getContainers().getFirst());
-            System.out.println("> Latest image digest: " + context.getStableDigest());
-            System.out.println("😏 Update the stable image to the latest image? (y/n/cancel) " + context.getContainers().getFirst() + " ");
+            System.out.println("---");
+            System.out.println("> Container image digest: " + context.getContainers().getFirst());
+            System.out.println(">    Latest image digest: " + context.getStableDigest());
+            System.out.println("---");
 
-            String updateStableImage = context.getScanner().nextLine();
-
-            if (updateStableImage.equals("y")) {
+            if (confirm("😏 Update the stable image to the latest image?", context)) {
                 createStableImage(context);
-            }
-
-            if (updateStableImage.equals("cancel")) {
-                throw new IllegalStateException("Aborted by user");
             }
         }
 
@@ -35,12 +31,8 @@ public class ConfigureImageStep extends Step {
             System.out.println("Service " + context.getServiceName() + " already using the latest image: " + context.getLatestImageDigest());
             System.out.println("-------------------------------------------------------------------------------------------------------------------------------");
 
-            System.out.println("⚠️ Force new deployment? (y/n)");
-
-            String forceNewDeployment = context.getScanner().nextLine();
-
-            if (!forceNewDeployment.equals("y")) {
-                throw new IllegalStateException("Ok, good bye");
+            if (!confirm("⚠️ Force new deployment?", context)) {
+                throw new AbortOperationException("Ok, good bye");
             }
         } else {
             System.out.println("-------------------------------------------------------------------------------------------------------------------------------");
