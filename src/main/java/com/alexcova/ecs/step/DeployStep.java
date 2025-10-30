@@ -42,6 +42,15 @@ public class DeployStep extends Step {
             }
         }
 
+        System.out.println("Putting old tasks out of service");
+
+        // Putting the old task out of service before updating the service to allow downsizing
+        for (String oldTask : context.getOldTasks()) {
+            context.putOutOfService(oldTask);
+        }
+
+        waitTime(5000);
+
         if (context.isNeedsDefinitionUpdate()) {
             if (confirm("🤠 Update task definition to revision " + context.getNewRevision() + "?", context)) {
                 System.out.println("Updating task definition to " + context.getTaskDefinition().family() + ":" + context.getNewRevision());
@@ -76,11 +85,6 @@ public class DeployStep extends Step {
 
         waitTime(20000);
 
-        System.out.println("Shutting down old tasks...");
-
-        for (String oldTask : context.getOldTasks()) {
-            context.putOutOfService(oldTask);
-        }
 
         Set<String> newTargets = new HashSet<>();
 
