@@ -49,6 +49,7 @@ public class Context implements CmdUtil {
     private final List<ARN> currentTasksArns = new ArrayList<>();
     private final List<ARN> backupTasksArns = new ArrayList<>();
     private final List<ARN> newTasksArns = new ArrayList<>();
+
     private final List<String> containers = new ArrayList<>();
     private final List<Instance> currentEurekaInstances = new ArrayList<>();
     private final List<String> oldTasks = new ArrayList<>();

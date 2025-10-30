@@ -42,9 +42,29 @@ public class DeployStep extends Step {
             }
         }
 
+        int desiredTasks = context.getCurrentTasksArns().size();
+
+        if (confirm("Change desired tasks?", context)) {
+            System.out.println("Current tasks: " + context.getCurrentTasksArns().size() + " Enter new desired tasks:");
+            var line = context.getScanner().nextLine();
+
+            if (line.matches("[0-9]{1,2}")) {
+                try {
+                    desiredTasks = Integer.parseInt(line);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("Incorrect value, skipping...");
+            }
+        }
+
+        desiredTasks = Math.max(desiredTasks, 1);
+
         System.out.println("Putting old tasks out of service");
 
         // Putting the old task out of service before updating the service to allow downsizing
+        // use oldTask in case of the service uses UUID as identifier
         for (String oldTask : context.getOldTasks()) {
             context.putOutOfService(oldTask);
         }
@@ -59,15 +79,17 @@ public class DeployStep extends Step {
                         .cluster(clusterName)
                         .service(serviceName)
                         .taskDefinition(context.getTaskDefinition().family() + ":" + context.getNewRevision())
+                        .desiredCount(desiredTasks)
                         .forceNewDeployment(true)
                         .build());
             } else {
-                System.out.println("Skipping task definition update");
+                System.out.println("Skipping task definition update, updating" + context.getCurrentTasksArns().size() + " tasks to new deployment");
 
                 ecsClient.updateService(UpdateServiceRequest.builder()
                         .cluster(clusterName)
                         .service(serviceName)
                         .forceNewDeployment(true)
+                        .desiredCount(desiredTasks)
                         .build());
             }
         } else {
@@ -77,6 +99,7 @@ public class DeployStep extends Step {
                     .cluster(clusterName)
                     .service(serviceName)
                     .forceNewDeployment(true)
+                    .desiredCount(desiredTasks)
                     .build());
         }
 
