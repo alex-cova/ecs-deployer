@@ -65,7 +65,6 @@ public abstract class Step implements CmdUtil {
     protected void waitForTask(@NotNull Context context, ARN taskArn) {
         var serviceName = context.getServiceName();
         var clusterName = context.getClusterName();
-        var ecsClient = context.getEcsClient();
         var eurekaClient = context.getEurekaClient();
 
         System.out.println("Waiting for task: " + taskArn + " to be healthy ");
@@ -206,7 +205,7 @@ public abstract class Step implements CmdUtil {
         while (progress < 100) {
             System.out.print("\r[");
             for (int i = 0; i <= progress; i++) {
-                System.out.print("=");
+                System.out.print("█");
             }
             for (int i = progress; i < 100; i++) {
                 System.out.print(" ");
@@ -220,6 +219,6 @@ public abstract class Step implements CmdUtil {
                 throw new RuntimeException(e);
             }
         }
-        System.out.println("\r[====================================================================================================] 100%");
+        System.out.println("\r[████████████████████████████████████████████████████████████████████████████████████████████████████] 100%");
     }
 }

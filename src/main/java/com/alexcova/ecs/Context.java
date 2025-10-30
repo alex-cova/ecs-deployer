@@ -219,11 +219,12 @@ public class Context implements CmdUtil {
         currentEurekaInstances.addAll(eurekaClient.getInstances(serviceName, clusterName));
 
         if (currentEurekaInstances.isEmpty()) {
-            throw new IllegalStateException("No instances found in eureka for service " + serviceName + " in " + clusterName + ", are you sure the service is registered?");
+            throw new IllegalStateException("No instances found in eureka for service %s in %s, are you sure the service is registered?".
+                    formatted(serviceName, clusterName));
         } else {
             usingECSID = true;
 
-            System.out.println("Found " + currentEurekaInstances.size() + " instances in eureka for service " + serviceName + " in " + clusterName);
+            System.out.printf("Found %d instances in eureka for service %s in %s%n", currentEurekaInstances.size(), serviceName, clusterName);
             for (Instance currentInstance : currentEurekaInstances) {
                 System.out.println("\t " + currentInstance.getInstanceId());
 
@@ -255,7 +256,7 @@ public class Context implements CmdUtil {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
-                System.out.println("Failed to get prometheus metrics (" + response.statusCode() + ")");
+                System.out.println("⚠️ Failed to get prometheus metrics (" + response.statusCode() + ")");
                 return;
             }
 

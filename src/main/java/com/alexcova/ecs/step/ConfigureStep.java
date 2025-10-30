@@ -12,7 +12,7 @@ public class ConfigureStep extends Step {
 
         System.out.println("> Enter the name of the ECS cluster:");
 
-        String clusterName = context.getScanner().nextLine();
+        String clusterName = context.getScanner().nextLine().trim();
 
         if (!clusterName.matches("^[a-zA-Z0-9-_]+$")) {
             throw new IllegalArgumentException("Cluster name '" + clusterName + "' is invalid");
@@ -20,7 +20,7 @@ public class ConfigureStep extends Step {
 
         System.out.println("> Enter the name of the ECS service:");
 
-        String serviceName = context.getScanner().nextLine();
+        String serviceName = context.getScanner().nextLine().trim();
 
         if (!serviceName.matches("^[a-zA-Z0-9-_]+$")) {
             throw new IllegalArgumentException("Service name '" + serviceName + "' is invalid");
