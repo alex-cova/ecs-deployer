@@ -3,10 +3,7 @@ package com.alexcova.ecs.step;
 import com.alexcova.ecs.Context;
 import com.alexcova.ecs.Step;
 import org.jetbrains.annotations.NotNull;
-import software.amazon.awssdk.services.ecr.model.ImageIdentifier;
-import software.amazon.awssdk.services.ecr.model.ListImagesFilter;
-import software.amazon.awssdk.services.ecr.model.ListImagesRequest;
-import software.amazon.awssdk.services.ecr.model.TagStatus;
+import software.amazon.awssdk.services.ecr.model.*;
 
 import java.util.Objects;
 
@@ -30,6 +27,8 @@ public class CheckECRStep extends Step {
                 .maxResults(250)
                 .build());
 
+        System.out.println("----");
+
         for (ImageIdentifier imageId : imagesResponse.imageIds()) {
             if (imageId.imageTag() == null) {
                 continue;
@@ -47,6 +46,7 @@ public class CheckECRStep extends Step {
             System.out.println("🔍 Found image: " + imageId.imageDigest() + " with tag: " + imageId.imageTag());
         }
 
+        System.out.println("----");
 
         if (context.getStableDigest().isEmpty()) {
             System.err.println("⚠️ WARNING no stable image found!");

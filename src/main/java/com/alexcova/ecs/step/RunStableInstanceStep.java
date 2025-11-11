@@ -44,8 +44,8 @@ public class RunStableInstanceStep extends Step {
                                 .memory(c.memory())
                                 .ipcMode(c.ipcMode())
                                 .executionRoleArn(c.executionRoleArn())
-                                .runtimePlatform(c.runtimePlatform())
                                 .taskRoleArn(c.taskRoleArn())
+                                .runtimePlatform(c.runtimePlatform())
                                 .ephemeralStorage(c.ephemeralStorage())
                                 .containerDefinitions(List.of(stableDefinition))
                         );
@@ -66,11 +66,8 @@ public class RunStableInstanceStep extends Step {
 
             if (!context.getStableDigest().equals(context.getLatestImageDigest()) &&
                     context.getLatestImageDigest().equals(context.getContainers().getFirst())) {
-                System.out.println("⚠️ Update the stable image to the latest image? (y/n) " + context.getLatestImageDigest());
 
-                String updateStableImage = context.getScanner().nextLine();
-
-                if (updateStableImage.equals("y")) {
+                if (confirm("⚠️ Update the stable image to the latest image?" + context.getLatestImageDigest(), context)) {
                     System.out.println("Updating stable image to " + context.getLatestImageDigest());
 
                     var response = context.getEcrClient()
@@ -123,11 +120,8 @@ public class RunStableInstanceStep extends Step {
 
         if (!runningStables.isEmpty()) {
             System.out.println("⚠️ WARNING there is already a backup task running (" + runningStables.size() + ")");
-            System.out.println("😎 Run anyway? (y/n)");
 
-            String runAnyway = context.getScanner().nextLine();
-
-            if (!runAnyway.equals("y")) {
+            if (!confirm("😎 Run anyway?", context)) {
                 for (String runningStable : runningStables) {
                     context.addBackupTask(new ARN(runningStable));
                 }
@@ -135,16 +129,8 @@ public class RunStableInstanceStep extends Step {
             }
         }
 
-        System.out.println("🐵 Starting (" + tasksRunning.taskArns().size() + ") backup service for " + context.getServiceName() + " with task definition " + backupFamily + ":" + backupRevision);
-
-        System.out.println("is it correct? (y/n)");
-
-        String correct = context.getScanner().nextLine();
-
-        if (!correct.equals("y")) {
-            System.out.println("Aborting...");
-            System.exit(0);
-        }
+        System.out.println("🐵 Starting (%s) backup service for %s with task definition %s:%s"
+                .formatted(tasksRunning.taskArns().size(), context.getServiceName(), backupFamily, backupRevision));
 
         var netConfig = context.getNetworkConfiguration();
 
@@ -160,6 +146,11 @@ public class RunStableInstanceStep extends Step {
         System.out.println("    Subnets: " + config.subnets());
         System.out.println("    Assign public IP: " + config.assignPublicIp());
         System.out.println("-----------------------------------------------------------");
+
+        if (!confirm("It is correct?", context)) {
+            System.out.println("Aborting...");
+            System.exit(0);
+        }
 
         RunTaskResponse response = context.getEcsClient().runTask(
                 RunTaskRequest.builder()
@@ -190,7 +181,9 @@ public class RunStableInstanceStep extends Step {
                 .map(ARN::new)
                 .toList());
 
-        waitForTask(context, new ARN(response.tasks().getFirst().taskArn()));
+        for (Task task : response.tasks()) {
+            waitForTask(context, new ARN(task.taskArn()));
+        }
 
         waitTime(context.getWaitTime() * 1000L);
 

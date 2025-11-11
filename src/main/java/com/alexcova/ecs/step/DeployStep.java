@@ -1,5 +1,7 @@
 package com.alexcova.ecs.step;
 
+import com.alexcova.ecs.ARN;
+import com.alexcova.ecs.AbortOperationException;
 import com.alexcova.ecs.Context;
 import com.alexcova.ecs.Step;
 import org.jetbrains.annotations.NotNull;
@@ -19,33 +21,75 @@ public class DeployStep extends Step {
 
     @Override
     public void execute(@NotNull Context context) {
-
-        final var scanner = context.getScanner();
         final var clusterName = context.getClusterName();
         final var serviceName = context.getServiceName();
         final var ecsClient = context.getEcsClient();
 
+        if (!confirm("☢️ Deploy new version?", context)) {
+            System.out.println("Aborting...");
+
+            new StopBackupStep()
+                    .stopBackupInstances(context);
+
+            System.exit(0);
+        }
+
+        waitTime(1000 * 60);
+
+        if (!isStableRunning(context)) {
+            if (confirm("Stables are not running, exit?", context)) {
+                throw new AbortOperationException("Stables are not running");
+            }
+        }
+
+        int desiredTasks = context.getCurrentTasksArns().size();
+
+        if (confirm("Change desired tasks?", context)) {
+            System.out.println("Current tasks: " + context.getCurrentTasksArns().size() + " Enter new desired tasks:");
+            var line = context.getScanner().nextLine();
+
+            if (line.matches("[0-9]{1,2}")) {
+                try {
+                    desiredTasks = Integer.parseInt(line);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("Incorrect value, skipping...");
+            }
+        }
+
+        desiredTasks = Math.max(desiredTasks, 1);
+
+        System.out.println("Putting old tasks out of service");
+
+        // Putting the old task out of service before updating the service to allow downsizing
+        // use oldTask in case of the service uses UUID as identifier
+        for (String oldTask : context.getOldTasks()) {
+            context.putOutOfService(oldTask);
+        }
+
+        waitTime(5000);
+
         if (context.isNeedsDefinitionUpdate()) {
-            System.out.println("🤠 Update task definition to revision " + context.getNewRevision() + "? (y/n)");
-
-            String updateDefinition = scanner.nextLine();
-
-            if (updateDefinition.equals("y")) {
+            if (confirm("🤠 Update task definition to revision " + context.getNewRevision() + "?", context)) {
                 System.out.println("Updating task definition to " + context.getTaskDefinition().family() + ":" + context.getNewRevision());
 
                 ecsClient.updateService(UpdateServiceRequest.builder()
                         .cluster(clusterName)
                         .service(serviceName)
                         .taskDefinition(context.getTaskDefinition().family() + ":" + context.getNewRevision())
+                        .desiredCount(desiredTasks)
                         .forceNewDeployment(true)
                         .build());
             } else {
-                System.out.println("Skipping task definition update");
+                System.out.println("Skipping task definition update, updating" + context.getCurrentTasksArns().size() + " tasks to new deployment");
 
                 ecsClient.updateService(UpdateServiceRequest.builder()
                         .cluster(clusterName)
                         .service(serviceName)
                         .forceNewDeployment(true)
+                        .desiredCount(desiredTasks)
                         .build());
             }
         } else {
@@ -55,6 +99,7 @@ public class DeployStep extends Step {
                     .cluster(clusterName)
                     .service(serviceName)
                     .forceNewDeployment(true)
+                    .desiredCount(desiredTasks)
                     .build());
         }
 
@@ -63,11 +108,6 @@ public class DeployStep extends Step {
 
         waitTime(20000);
 
-        System.out.println("Shutting down old tasks...");
-
-        for (String oldTask : context.getOldTasks()) {
-            context.putOutOfService(oldTask);
-        }
 
         Set<String> newTargets = new HashSet<>();
 
@@ -87,6 +127,7 @@ public class DeployStep extends Step {
                 if (context.getCurrentTasksArns().stream().noneMatch(i -> i.equalsArn(taskArn))) {
                     newTargets.add(taskArn);
                     System.out.println("🤠 New task: " + taskArn + " " + newTargets.size() + " of " + context.getCurrentTasksArns().size());
+                    context.addNewTaskArn(new ARN(taskArn));
                 }
             }
 
@@ -123,7 +164,7 @@ public class DeployStep extends Step {
 
             var response = ecsClient.describeTasks(DescribeTasksRequest.builder()
                     .cluster(clusterName)
-                    .tasks(newTargets.stream().findFirst().get())
+                    .tasks(newTargets.iterator().next())
                     .build());
 
             var task = response.tasks().stream()
@@ -132,11 +173,14 @@ public class DeployStep extends Step {
                     .orElse(null);
 
             if (task != null) {
+                String substring = task.taskArn().substring(task.taskArn().indexOf("/"));
+
                 if (task.healthStatus() == HealthStatus.HEALTHY) {
-                    System.out.println("🎉 new task " + task.taskArn().substring(task.taskArn().indexOf("/")) + " is healthy at " + LocalTime.now() + " other task may stop in less than " + context.getStopTimeout() + " seconds");
+                    System.out.println("🎉 new task " + substring + " is healthy at " + LocalTime.now() + " other task may stop in less than " + context.getStopTimeout() + " seconds");
                     break;
                 } else {
-                    System.out.println("Waiting (5 sec) for service " + serviceName + " to update task " + task.taskArn().substring(task.taskArn().indexOf("/")) + ", current status: " + task.lastStatus());
+                    System.out.printf("Waiting (5 sec) for service %s to update task %s, current status: %s%n",
+                            serviceName, substring, task.lastStatus());
 
                     waitTime(5000);
                 }
@@ -153,7 +197,23 @@ public class DeployStep extends Step {
         List<Instance> registeredInstances = context.getEurekaInstances();
 
         for (Instance instance : registeredInstances) {
-            System.out.println("Instance: " + instance.getInstanceId() + " " + instance.getIpAddr() + ":" + instance.getPort() + " " + instance.getStatus());
+            ARN arn = context.getArn(instance.getInstanceId());
+            if (arn != null) {
+                var task = getECSTask(context, arn);
+
+                if (task != null) {
+                    System.out.printf("Instance: %s %s:%s %s ECS Status: %s %s %n",
+                            instance.getInstanceId(), instance.getIpAddr(), instance.getPort(), instance.getStatus(), task.group(), task.lastStatus());
+
+                    if (task.stoppedAt() != null) {
+                        System.err.println(task.stoppedReason());
+                    }
+
+                    continue;
+                }
+            }
+
+            System.out.printf("Instance: %s %s:%s %s%n", instance.getInstanceId(), instance.getIpAddr(), instance.getPort(), instance.getStatus());
         }
 
         System.out.println("Finished!");

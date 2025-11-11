@@ -12,15 +12,16 @@ import java.util.List;
 public final class HealthChecker implements Runnable {
 
     private final String service;
-    private final String cluster;
     private final Configuration configuration;
+    @NotNull
+    private final Context context;
     private final List<TimestampedResponse> responseCodes = new ArrayList<>();
     private volatile boolean stop = false;
 
-    public HealthChecker(String service, String cluster, Configuration configuration) {
-        this.service = service;
-        this.cluster = cluster;
-        this.configuration = configuration;
+    public HealthChecker(@NotNull Context context) {
+        this.service = context.getServiceName();
+        this.configuration = context.getConfiguration();
+        this.context = context;
     }
 
     public void start() {
@@ -30,7 +31,7 @@ public final class HealthChecker implements Runnable {
     @Override
     public void run() {
         while (!stop) {
-            HttpResponse<String> response = sendRequest(service, cluster);
+            HttpResponse<String> response = sendRequest(service);
 
             if (response != null) {
                 responseCodes.add(new TimestampedResponse(response.statusCode()));
@@ -52,10 +53,8 @@ public final class HealthChecker implements Runnable {
 
 
     @Nullable
-    private HttpResponse<String> sendRequest(@NotNull String serviceName, @NotNull String clusterName) {
-        var production = clusterName.equalsIgnoreCase("production");
-
-        var prometheus = production ? configuration.getPrometheusProduction() : configuration.getPrometheusDevelopment();
+    private HttpResponse<String> sendRequest(@NotNull String serviceName) {
+        var prometheus = context.isProduction() ? configuration.getPrometheusProduction() : configuration.getPrometheusDevelopment();
 
         var url = "https://%s/%s/v1/actuator/prometheus"
                 .formatted(prometheus, serviceName);

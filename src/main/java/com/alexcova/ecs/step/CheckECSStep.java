@@ -76,11 +76,7 @@ public class CheckECSStep extends Step {
                 System.out.print("\t" + instance.getInstanceId() + " ");
             }
 
-            System.out.println("😰 Is it correct? (y/n)");
-
-            String correct = context.getScanner().nextLine();
-
-            if (!correct.equals("y")) {
+            if (!confirm("😰 Is it correct?", context)) {
                 throw new IllegalStateException("Aborted by user");
             }
         }
@@ -152,9 +148,9 @@ public class CheckECSStep extends Step {
         System.out.println("👉 Current task definition image: " + currentContainer.image() + ":" + context.getCurrentTag());
 
         if (context.getNewRevision() == taskDefinition.revision()) {
-            System.out.println("👉 Task definition is already the latest revision (" + taskDefinition + ")");
+            System.out.println("✅ Task definition is already the latest revision (" + taskDefinition + ")");
         } else {
-            System.out.println("👉 Task definition is not the latest revision (" + taskDefinition + ")");
+            System.out.println("⚠️ Task definition is not the latest revision (" + taskDefinition + ")");
             context.setNeedsDefinitionUpdate(true);
         }
 

@@ -7,8 +7,17 @@ public class Configuration {
     private String eurekaBasicAuthentication;
     private String prometheusProduction;
     private String prometheusDevelopment;
+    private String gatewayInstancesUri;
 
     public Configuration() {
+    }
+
+    public String getGatewayInstancesUri() {
+        return gatewayInstancesUri;
+    }
+
+    public void setGatewayInstancesUri(String gatewayInstancesUri) {
+        this.gatewayInstancesUri = gatewayInstancesUri;
     }
 
     public String getPrometheusDevelopment() {
