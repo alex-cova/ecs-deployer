@@ -44,7 +44,7 @@ public class DeployStep extends Step {
 
         int desiredTasks = context.getCurrentTasksArns().size();
 
-        if (confirm("Change desired tasks?", context)) {
+        if (confirm("Change desired tasks? (current: %s)".formatted(desiredTasks), context)) {
             System.out.println("Current tasks: " + context.getCurrentTasksArns().size() + " Enter new desired tasks:");
             var line = context.getScanner().nextLine();
 
@@ -131,7 +131,7 @@ public class DeployStep extends Step {
                 }
             }
 
-            if (newTargets.size() == context.getCurrentTasksArns().size()) break;
+            if (newTargets.size() == desiredTasks) break;
         }
 
         waitTime(context.getWaitTime() * 1000L);

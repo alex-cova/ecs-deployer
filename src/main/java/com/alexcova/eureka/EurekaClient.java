@@ -38,7 +38,6 @@ public class EurekaClient {
             HttpResponse<String> send = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             return send.statusCode() == 200;
-
         } catch (IOException | InterruptedException e) {
             Logger.getLogger(EurekaClient.class.getName())
                     .log(Level.SEVERE, null, e);
