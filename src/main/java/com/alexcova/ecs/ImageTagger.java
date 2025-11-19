@@ -1,6 +1,5 @@
-package com.alexcova;
+package com.alexcova.ecs;
 
-import com.alexcova.ecs.Context;
 import software.amazon.awssdk.services.ecr.model.*;
 
 import java.util.ArrayList;
@@ -71,7 +70,7 @@ public class ImageTagger {
                 .putImage(PutImageRequest.builder()
                         .repositoryName(serviceName)
                         .imageManifest(manifest)
-                        .imageTag("stable")
+                        .imageTag("latest")
                         .build());
 
         System.out.println("Finished");

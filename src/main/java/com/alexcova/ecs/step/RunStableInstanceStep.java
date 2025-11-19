@@ -59,6 +59,8 @@ public class RunStableInstanceStep extends Step {
             }
         }
 
+        Objects.requireNonNull(backupFamily, "Backup family is null");
+
         if (backupFamily.endsWith("-stable")) {
             if (context.getStableDigest().isEmpty()) {
                 throw new IllegalStateException("No stable image found");
@@ -99,8 +101,6 @@ public class RunStableInstanceStep extends Step {
             System.out.println("Image for backup task will be " + context.getCurrentImage());
         }
 
-        Objects.requireNonNull(backupFamily, "Backup family is null");
-
         var tasksRunning = context.getEcsClient()
                 .listTasks(ListTasksRequest.builder()
                         .cluster(context.getClusterName())
@@ -129,8 +129,8 @@ public class RunStableInstanceStep extends Step {
             }
         }
 
-        System.out.println("🐵 Starting (%s) backup service for %s with task definition %s:%s"
-                .formatted(tasksRunning.taskArns().size(), context.getServiceName(), backupFamily, backupRevision));
+        System.out.printf("\uD83D\uDC35 Starting (%s) backup service for %s with task definition %s:%s%n",
+                tasksRunning.taskArns().size(), context.getServiceName(), backupFamily, backupRevision);
 
         var netConfig = context.getNetworkConfiguration();
 

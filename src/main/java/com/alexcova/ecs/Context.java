@@ -332,6 +332,10 @@ public class Context implements CmdUtil {
         backupTasksArns.add(arn);
     }
 
+    public void addBackupTask(String arn) {
+        backupTasksArns.add(new ARN(arn));
+    }
+
     public void addBackupTask(List<ARN> arns) {
         backupTasksArns.addAll(arns);
     }

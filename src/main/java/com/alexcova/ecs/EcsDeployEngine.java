@@ -8,14 +8,6 @@ public class EcsDeployEngine {
     private final Context context;
 
     public EcsDeployEngine() {
-        System.out.println("""
-                                      _            _                      \s
-                   ___  ___ ___    __| | ___ _ __ | | ___  _   _  ___ _ __\s
-                  / _ \\/ __/ __|  / _` |/ _ \\ '_ \\| |/ _ \\| | | |/ _ \\ '__|
-                 |  __/ (__\\__ \\ | (_| |  __/ |_) | | (_) | |_| |  __/ |  \s
-                  \\___|\\___|___/  \\__,_|\\___| .__/|_|\\___/ \\__, |\\___|_|  \s
-                    by Alex                 |_|            |___/          \s
-                """);
         this.context = new Context();
     }
 

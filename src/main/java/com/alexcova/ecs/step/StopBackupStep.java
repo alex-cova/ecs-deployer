@@ -5,12 +5,28 @@ import com.alexcova.ecs.Context;
 import com.alexcova.ecs.Step;
 import org.jetbrains.annotations.NotNull;
 import software.amazon.awssdk.services.ecs.model.HealthStatus;
+import software.amazon.awssdk.services.ecs.model.ListTasksRequest;
 import software.amazon.awssdk.services.ecs.model.StopTaskRequest;
 
 public class StopBackupStep extends Step {
 
     @Override
     public void execute(@NotNull Context context) {
+        if (context.getBackupTasksArns().isEmpty()) {
+            var response = context.getEcsClient()
+                    .listTasks(ListTasksRequest.builder()
+                            .cluster(context.getClusterName())
+                            .family(context.getServiceName() + "-stable")
+                            .maxResults(100)
+                            .build());
+
+            for (String taskArn : response.taskArns()) {
+                System.out.println("stable: " + taskArn);
+            }
+
+            response.taskArns().forEach(context::addBackupTask);
+        }
+
         if (confirm("Stop backup tasks (" + context.getBackupTasksArns().size() + ")?", context)) {
             stopBackupInstances(context);
         } else {
@@ -19,6 +35,11 @@ public class StopBackupStep extends Step {
     }
 
     public void stopBackupInstances(@NotNull Context context) {
+        if (context.getBackupTasksArns().isEmpty()) {
+            System.out.println("No backup tasks found");
+            return;
+        }
+
         System.out.println("Stopping backup tasks, lets check if the new task are healthy");
 
         for (ARN newTasksArn : context.getNewTasksArns()) {
@@ -47,12 +68,12 @@ public class StopBackupStep extends Step {
         waitTime(context.getStopTimeout() * 1000L);
 
         for (ARN arn : context.getBackupTasksArns()) {
+            System.out.println("Stopping backup task: " + arn);
+
             context.getEcsClient().stopTask(StopTaskRequest.builder()
                     .cluster(context.getClusterName())
                     .task(arn.lastToken())
                     .build());
-
-            System.out.println("Stopping backup task: " + arn);
         }
 
         System.out.println("waiting propagation time (30 sec)");
