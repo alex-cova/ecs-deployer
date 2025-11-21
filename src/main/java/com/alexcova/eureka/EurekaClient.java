@@ -44,8 +44,8 @@ public class EurekaClient {
     }
 
     public boolean changeStatus(String application, String instanceId, String environment, String status) {
-        var request = HttpRequest.newBuilder(URI.create("http://" + getHost(environment) + "/eureka/apps/%s/%s/status?value=" + status
-                        .formatted(application, instanceId)))
+        var request = HttpRequest.newBuilder(URI.create("http://" + getHost(environment) + "/eureka/apps/%s/%s/status?value=%s"
+                        .formatted(application, instanceId, status)))
                 .header("Authorization", "Basic " + config.getEurekaBasicAuthentication())
                 .PUT(HttpRequest.BodyPublishers.noBody())
                 .build();
