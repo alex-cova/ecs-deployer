@@ -28,7 +28,23 @@ public class EurekaClient {
     }
 
     public boolean outOfService(String application, String instanceId, String environment) {
-        var request = HttpRequest.newBuilder(URI.create("http://" + getHost(environment) + "/eureka/apps/%s/%s/status?value=OUT_OF_SERVICE"
+        return changeStatus(application, instanceId, environment, "OUT_OF_SERVICE");
+    }
+
+    public boolean up(String application, String instanceId, String environment) {
+        return changeStatus(application, instanceId, environment, "UP");
+    }
+
+    public boolean down(String application, String instanceId, String environment) {
+        return changeStatus(application, instanceId, environment, "DOWN");
+    }
+
+    public boolean starting(String application, String instanceId, String environment) {
+        return changeStatus(application, instanceId, environment, "STARTING");
+    }
+
+    public boolean changeStatus(String application, String instanceId, String environment, String status) {
+        var request = HttpRequest.newBuilder(URI.create("http://" + getHost(environment) + "/eureka/apps/%s/%s/status?value=" + status
                         .formatted(application, instanceId)))
                 .header("Authorization", "Basic " + config.getEurekaBasicAuthentication())
                 .PUT(HttpRequest.BodyPublishers.noBody())

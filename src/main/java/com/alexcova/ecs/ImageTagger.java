@@ -66,14 +66,22 @@ public class ImageTagger {
 
         var manifest = response.images().getFirst().imageManifest();
 
+        System.out.println("image tag:");
+        var tag = scanner.nextLine();
+
+        if (tag.isEmpty()) {
+            System.out.println("Invalid tag value");
+            return;
+        }
+
         context.getEcrClient()
                 .putImage(PutImageRequest.builder()
                         .repositoryName(serviceName)
                         .imageManifest(manifest)
-                        .imageTag("latest")
+                        .imageTag(tag)
                         .build());
 
-        System.out.println("Finished");
+        System.out.println("Tagged image as: " + tag);
 
     }
 }

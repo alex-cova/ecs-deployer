@@ -63,7 +63,7 @@ public class CheckECSStep extends Step {
 
         for (ARN arn : currentTasksArns) {
             String id = arn.lastToken();
-            System.out.println("Task: " + arn + " id: " + id);
+            System.out.println("> Old task: " + arn + " id: " + id);
             context.addOldTask(id);
         }
 

@@ -56,7 +56,10 @@ public class Deployer {
         } else if (choice == 2) {
             new EcsDeployEngine()
                     .and(new ConfigureStep())
+                    .and(new CheckECSStep())
+                    .and(new CheckECRStep())
                     .and(new RunStableInstanceStep())
+                    .and(new RollbackStableStep())
                     .execute();
         } else if (choice == 3) {
             new EcsDeployEngine()

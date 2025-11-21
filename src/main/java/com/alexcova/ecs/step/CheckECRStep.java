@@ -10,6 +10,8 @@ import java.util.Objects;
 public class CheckECRStep extends Step {
     @Override
     public void execute(@NotNull Context context) {
+        System.out.println("Checking ECR repository...");
+
         Objects.requireNonNull(context.getServiceName());
         Objects.requireNonNull(context.getClusterName());
 
@@ -27,7 +29,7 @@ public class CheckECRStep extends Step {
                 .maxResults(250)
                 .build());
 
-        System.out.println("----");
+        System.out.println("---- found: " + imagesResponse.imageIds().size() + " images");
 
         for (ImageIdentifier imageId : imagesResponse.imageIds()) {
             if (imageId.imageTag() == null) {
